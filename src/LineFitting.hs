@@ -8,12 +8,18 @@ import           Linear
 
 import           Control.Monad.Random
 
+
+-- TODO ... clean this up
 fitLine :: V.Vector (V2 Double) -> (Double,Double)
 fitLine vs = (α,β)
-    where (xy,x,y,x2) = V.foldl' (\(xy,x,y,x2) (V2 a b) -> (xy+a*b,x+a,y+b,x2+a*a)) (0,0,0,0) vs
-          β           = (xy - x*y) / (x2-x^2)
-          α           = y - β * x
+    where (mx,my) = V.foldl' (\(mx,my) (V2 x y) -> (mx+x,my+y)) (0,0) vs
+          mx'   = mx / c
+          my'   = my / c
 
+          (n,d) = V.foldl' (\(n,d) (V2 x y) -> (n + (x-mx')*(y-my'), d + (x-mx')^2)) (0,0) vs
+          β     = n / d
+          α     = my' - β * mx'
+          c     = fromIntegral $ V.length vs
 
 
 randomLine :: MonadRandom m => m (V.Vector (V2 Double))
@@ -36,3 +42,20 @@ randomPointOnLine α β = do
 
 distanceToLine :: (Double, Double) -> V2 Double -> Double
 distanceToLine (α,β) (V2 x y) = abs (y - (α + x * β))
+
+randomFittingProblem :: Int -> Int -> Double -> IO (Double,Double,V.Vector (V2 Double))
+randomFittingProblem numInliers numOutliers noise = do
+    -- setup a generic fitting problem
+    α <- getRandomR (-1,1) 
+    β <- getRandomR (-10,10)
+
+    -- sample random points on line
+    ps <- V.replicateM numInliers (randomPointOnLine α β)
+
+    -- sample random points as noise
+    ns <- V.replicateM numOutliers (V2 <$> getRandomR (-noise,noise) <*> getRandomR (-noise,noise))
+
+    -- test set
+    let points = V.concat [ps,ns]
+
+    return (α,β,points)
