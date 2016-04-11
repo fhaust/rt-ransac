@@ -1,4 +1,4 @@
-module Lib
+module RANSAC
     ( drawSamples
     , ransac
     , ransacIO

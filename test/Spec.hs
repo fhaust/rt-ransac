@@ -10,8 +10,8 @@ import           Test.QuickCheck.Monadic
 
 
 import qualified Numeric.Ransac as ACow
-import           Lib            as NG
-import qualified MSAC           as MSAC
+import qualified RANSAC
+import qualified MSAC
 
 import           LineFitting
 
@@ -35,7 +35,7 @@ propACowIsRight (LFP (α,β,ps)) = monadicIO $ do
     Nothing          -> False
 
 propNGIsRight (LFP (α,β,ps)) = monadicIO $ do
-  ng <- run $ NG.ransacIO 3 2 90 fitLine (\l p -> distanceToLine l p < 0.1) ps
+  ng <- run $ RANSAC.ransacIO 3 2 90 fitLine (\l p -> distanceToLine l p < 0.1) ps
   assert $ case ng of
     Just ((α',β'),_) -> abs (α - α') < 1e-9 && abs (β - β') < 1e-9
     Nothing          -> False
@@ -85,7 +85,7 @@ propACowNoisy (NLFP α β δ ps) = monadicIO $ do
     Nothing          -> False
 
 propNGNoisy (NLFP α β δ ps) = monadicIO $ do
-  ng <- run $ NG.ransacIO 100 2 50 fitLine (\l p -> distanceToLine l p < 0.1) ps
+  ng <- run $ RANSAC.ransacIO 100 2 50 fitLine (\l p -> distanceToLine l p < 0.1) ps
   assert $ case ng of
     Just ((α',β'),_) -> abs (α - α') < 1e-1 && abs (β - β') < 1e-1
     Nothing          -> False
@@ -93,7 +93,7 @@ propNGNoisy (NLFP α β δ ps) = monadicIO $ do
 propNoisyACowEqNG (NLFP α β δ ps) = monadicIO $ do
 
   acow <- run $ ACow.ransac 100 2 0.5 (Just . fitLine) distanceToLine (< 0.1) ps
-  ng   <- run $ NG.ransacIO 100 2 50 fitLine (\l p -> distanceToLine l p < 0.1) ps
+  ng   <- run $ RANSAC.ransacIO 100 2 50 fitLine (\l p -> distanceToLine l p < 0.1) ps
 
   assert $ case (acow,ng) of
     (Just ((α0,β0),_), Just ((α1,β1),_)) -> abs (α0 - α1) < 1e-1  && abs (β0 - β1) < 1e-1

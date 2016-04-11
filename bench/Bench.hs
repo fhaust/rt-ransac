@@ -11,7 +11,7 @@ import LineFitting
 import Linear
 
 import qualified Numeric.Ransac as ACow
-import qualified Lib            as NG
+import qualified RANSAC         as NG
 import qualified MSAC
 
 import           Control.Monad.Random
