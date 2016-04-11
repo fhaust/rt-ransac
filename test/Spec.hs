@@ -11,10 +11,13 @@ import           Test.QuickCheck.Monadic
 
 import qualified Numeric.Ransac as ACow
 import           Lib            as NG
+import qualified MSAC           as MSAC
 
 import           LineFitting
 
 import           Linear
+
+import           Debug.Trace
 
 main :: IO ()
 main = defaultMain $ testGroup "Test Suite"
@@ -37,6 +40,12 @@ propNGIsRight (LFP (α,β,ps)) = monadicIO $ do
     Just ((α',β'),_) -> abs (α - α') < 1e-9 && abs (β - β') < 1e-9
     Nothing          -> False
 
+propMSACIsRight (LFP (α,β,ps)) = monadicIO $ do
+  result <- run $ MSAC.msacIO (const True) 3 2 fitLine distanceToLine (< 0.1) ps
+  assert $ case result of
+    Just ((α',β'),_,_) -> traceShow (α',β') $ abs (α - α') < 1e-9 && abs (β - β') < 1e-9
+    Nothing            -> False
+
 propFitLineWorks (LFP (α,β,ps)) = let (α',β') = fitLine ps in α `epEq` α' && β `epEq` β'
     where epEq a b = abs (a - b) < 1e-6
 
@@ -44,6 +53,7 @@ groupBasics = testGroup "basic properties"
   [ testProperty "fitline" propFitLineWorks
   , testProperty "acow" propACowIsRight
   , testProperty "ng" propNGIsRight
+  , testProperty "msac" propMSACIsRight
   ]
 
 
