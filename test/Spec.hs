@@ -41,10 +41,10 @@ propNGIsRight (LFP (α,β,ps)) = monadicIO $ do
     Nothing          -> False
 
 propMSACIsRight (LFP (α,β,ps)) = monadicIO $ do
-  result <- run $ MSAC.msacIO (const True) 3 2 fitLine distanceToLine (< 0.1) ps
-  assert $ case result of
-    Just ((α',β'),_,_) -> traceShow (α',β') $ abs (α - α') < 1e-9 && abs (β - β') < 1e-9
-    Nothing            -> False
+  result <- run $ MSAC.bestResult . MSAC.onlyResults <$> MSAC.msac 3 2 (Just . fitLine) (const True) distanceToLine (< 0.1) ps
+  assert $ case MSAC.rModel <$> result of
+    Just (α',β') -> abs (α - α') < 1e-9 && abs (β - β') < 1e-9
+    Nothing      -> False
 
 propFitLineWorks (LFP (α,β,ps)) = let (α',β') = fitLine ps in α `epEq` α' && β `epEq` β'
     where epEq a b = abs (a - b) < 1e-6
